@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MiniPOSAdndroid</string>
+    <string name="navigation_drawer_open">Open naviation drawer</string>
+    <string name="navigation_drawer_close">Open naviation drawer</string>
+</resources>

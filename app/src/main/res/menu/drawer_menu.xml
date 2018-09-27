@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    >
+    <item android:id="@+id/cashierMenu" android:icon="@drawable/ic_store" android:title="หน้าการขาย"/>
+    <item android:id="@+id/lessProductMenu" android:title="สินค้าคงเหลือน้อย" android:icon="@drawable/ic_error_outline_black_24dp"/>
+    <item android:id="@+id/logoutMenu" android:icon="@drawable/ic_logout" android:title="ออกจากระบบ" />
+</menu>
