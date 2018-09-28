@@ -62,20 +62,39 @@ public class LoginActivity extends AppCompatActivity {
                     user.getUser().setUsername(usernameEditText.getText().toString());
                     user.getUser().setPassword(passwordEditText.getText().toString());
                     try{
-                        LoginController loginController = new LoginController(getApplicationContext());
-                        String responseData = loginController.verifyLogin(new Gson().toJson(user.getUser()));
-                        MessageModel messageModel = new MessageModel(responseData);
-                        if(responseData!=null){
-                            if(messageModel.getMessage().getMessageText()!=null){
-                                if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Wrong username or password.")){
-                                    toast("ชื่อผู้ใช้หรือรหัสผ่านผิด");
+                        final LoginController loginController = new LoginController(getApplicationContext());
+                        final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this);
+                        progressDialog.setMessage("กำลังโหลด...");
+                        progressDialog.show();
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                String responseData = null;
+                                try {
+                                    responseData = loginController.verifyLogin(new Gson().toJson(user.getUser()));
+                                    MessageModel messageModel = new MessageModel(responseData);
+                                    if(responseData!=null){
+                                        if(messageModel.getMessage().getMessageText()!=null){
+                                            if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Wrong username or password.")){
+                                                toast("ชื่อผู้ใช้หรือรหัสผ่านผิด");
+                                            }
+                                        }else{
+                                            Intent intent = new Intent(LoginActivity.this,MainActivity.class);
+                                            intent.putExtra("userJsonObject",responseData);
+                                            startActivity(intent);
+                                        }
+                                    }else{
+                                        Toast.makeText(LoginActivity.this,"ไม่สามารถเชื่อมต่อระบบได้",Toast.LENGTH_SHORT).show();
+                                    }
+                                    progressDialog.dismiss();
+                                } catch (ExecutionException e) {
+                                    e.printStackTrace();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
                                 }
-                            }else{
-                                    Intent intent = new Intent(LoginActivity.this,MainActivity.class);
-                                    intent.putExtra("userJsonObject",responseData);
-                                    startActivity(intent);
                             }
-                        }
+                        },1000);
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -106,8 +125,13 @@ public class LoginActivity extends AppCompatActivity {
            final EditText serverIP_EditText = (EditText) mView.findViewById(R.id.serverIP_EditText);
            final EditText serverPort_EditText = (EditText) mView.findViewById(R.id.serverPort_EditText);
            final Button setupBtn = (Button) mView.findViewById(R.id.setupBtn);
-           String[] serverPath = sm.readServerConfig();
-           if(serverPath!=null){
+           String[] serverPath = {};
+           System.out.println("check file : "+sm.checkFileExits());
+           if(sm.readServerConfig().length>0) {
+              serverPath = sm.readServerConfig();
+           }
+           System.out.println(serverPath.length);
+           if(serverPath.length>0) {
                serverIP_EditText.setText(serverPath[0].toString());
                serverPort_EditText.setText(serverPath[1].toString());
            }
@@ -193,6 +217,10 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(LoginActivity.this,"กดปุ่มกลับ 2 ครั้งเพื่อ ออกจากแอพ",Toast.LENGTH_SHORT).show();
         }
         backPressedTime = System.currentTimeMillis();
+    }
+    static boolean IsNullOrEmpty(String[] myStringArray)
+    {
+        return myStringArray == null || myStringArray.length < 1;
     }
 }
 

@@ -56,11 +56,13 @@ public class StorageManager {
         return (check == PackageManager.PERMISSION_GRANTED);
     }
 
-
-
+    public boolean checkFileExits(){
+        File file = new File(FILENAME);
+        return file.exists();
+    }
 
     public String[] readServerConfig(){
-        String[] serverPath = new String[2];
+        String[] serverPath = {};
         try{
             if(isExternalStorageReadable()){
                 File textFile = new File(Environment.getExternalStorageDirectory(),FILENAME);
