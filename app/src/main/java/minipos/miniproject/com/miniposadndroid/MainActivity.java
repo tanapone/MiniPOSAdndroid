@@ -14,17 +14,22 @@ import android.view.Window;
 import android.widget.Toast;
 
 import minipos.miniproject.com.miniposadndroid.Fragment.CashierFragment;
+import minipos.miniproject.com.miniposadndroid.Models.UserModel;
 
 public class MainActivity extends AppCompatActivity implements  NavigationView.OnNavigationItemSelectedListener{
     private DrawerLayout drawer;
+    private UserModel userModel;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_main);
 
+        setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
+        String userJsonObject = getIntent().getStringExtra("userJsonObject");
+        userModel = new UserModel(userJsonObject);
+
         drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -64,5 +69,9 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
                 startActivity(intent);
         }
         return true;
+    }
+
+    public UserModel.User getUser(){
+        return this.userModel.getUser();
     }
 }

@@ -2,8 +2,10 @@ package minipos.miniproject.com.miniposadndroid.Models;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 public class MessageModel {
+    @Expose
     private Message message;
 
     public MessageModel(){}
@@ -17,6 +19,7 @@ public class MessageModel {
         message = gson.fromJson(jsonResponse,Message.class);
     }
     public class Message{
+        @Expose
         private String message;
 
         public String getMessageText() {

@@ -4,8 +4,10 @@ import android.app.Application;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 public class UserModel extends Application {
+    @Expose
     private User user;
 
     public UserModel(){
@@ -32,15 +34,25 @@ public class UserModel extends Application {
     }
 
     public class User{
+        @Expose
         private long id = 0;
+        @Expose
         private String username;
+        @Expose
         private String password;
+        @Expose
         private int userType;
+        @Expose
         private String firstName;
+        @Expose
         private String lastName;
+        @Expose
         private String email;
+        @Expose
         private String phoneNumber;
+        @Expose
         private String address;
+        @Expose
         private String authKey;
 
         public long getId() {

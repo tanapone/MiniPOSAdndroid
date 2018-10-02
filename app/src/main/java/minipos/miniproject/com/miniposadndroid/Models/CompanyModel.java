@@ -2,9 +2,10 @@ package minipos.miniproject.com.miniposadndroid.Models;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 public class CompanyModel {
-
+    @Expose
     private Company company;
 
     public CompanyModel(){}
@@ -20,10 +21,15 @@ public class CompanyModel {
 
 
     public class Company{
+        @Expose
         private long id;
+        @Expose
         private String companyName;
+        @Expose
         private String companyPhoneNumber;
+        @Expose
         private String companyEmail;
+        @Expose
         private String companyAddress;
 
         public long getId() {

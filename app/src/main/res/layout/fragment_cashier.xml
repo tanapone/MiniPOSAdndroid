@@ -2,36 +2,114 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     >
-
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="5dp">
     <TableLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:stretchColumns="*">
-    <TableRow>
-        <EditText android:id="@+id/searchText"
+        <TableRow>
+            <EditText android:id="@+id/searchText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:hint="ชื่อสินค้า"
+                android:focusedByDefault="false"/>
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/searchButton"
+                android:src="@drawable/ic_search_black_24dp"
+                />
+        </TableRow>
+        <TableRow>
+            <Button
+                android:id="@+id/searchCategoryBtn"
+                android:text="ค้นหาจากประเภทสินค้า"
+                android:layout_height="43dp"
+                />
+
+            <ImageButton
+                android:id="@+id/scanButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="scan"
+                android:src="@drawable/ic_barcode"/>
+        </TableRow>
+    </TableLayout>
+</LinearLayout>
+
+    <ScrollView
+        android:id="@+id/scrollViewLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:inputType="textPersonName"
-            android:hint="ชื่อสินค้า"
-            android:focusedByDefault="false"/>
-        <ImageButton
+            android:orientation="vertical"
+            android:padding="10dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="รายการสินค้า"/>
+
+            <TextView
+            android:id="@+id/noProductInOrderTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/searchButton"
-            android:src="@drawable/ic_search_black_24dp"
-            />
-    </TableRow>
-    <TableRow>
-        <TextView />
-        <ImageButton
-            android:id="@+id/scanButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="scan"
-            android:src="@drawable/ic_barcode"/>
-    </TableRow>
-    </TableLayout>
+            android:text="ยังไม่มีรายการสินค้า"
+            android:layout_gravity="center" />
 
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/listItemTableLayout"
+                android:stretchColumns="*">
+            </TableLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="10dp"
+                >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="ราคารวม : "
+                    android:textSize="20dp"
+                    />
+                <TextView
+                    android:id="@+id/totalPriceTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:textSize="20dp"
+                    android:textColor="#008000"
+                    android:text="0.00 บาท"/>
+
+            </LinearLayout>
+
+                <Button
+                    android:id="@+id/saveOrderBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorAccent"
+                    android:textColor="#fff"
+                    android:text="บันทึกการขาย"
+                    android:layout_marginTop="10dp"/>
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="test"
+                    android:id="@+id/testBtn"/>
+
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

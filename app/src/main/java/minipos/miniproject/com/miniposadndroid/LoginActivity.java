@@ -42,6 +42,7 @@ public class LoginActivity extends AppCompatActivity {
     private Matcher matcher;
     private String Port_PATTERN = "^[1-9]{1}[0-9]{3}$";
     private long backPressedTime;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,7 +73,11 @@ public class LoginActivity extends AppCompatActivity {
                             public void run() {
                                 String responseData = null;
                                 try {
-                                    responseData = loginController.verifyLogin(new Gson().toJson(user.getUser()));
+                                    if(sm.readServerConfig().length>0){
+                                        responseData = loginController.verifyLogin(new Gson().toJson(user.getUser()));
+                                    }else{
+                                        toast("กรุณาตั้งค่าการเชื่อมต่อเซิฟเวอร์ก่อน");
+                                    }
                                     MessageModel messageModel = new MessageModel(responseData);
                                     if(responseData!=null){
                                         if(messageModel.getMessage().getMessageText()!=null){
@@ -222,5 +227,6 @@ public class LoginActivity extends AppCompatActivity {
     {
         return myStringArray == null || myStringArray.length < 1;
     }
+
 }
 

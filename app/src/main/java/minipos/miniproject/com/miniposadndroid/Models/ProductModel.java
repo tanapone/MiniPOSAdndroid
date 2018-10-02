@@ -2,9 +2,10 @@ package minipos.miniproject.com.miniposadndroid.Models;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 public class ProductModel {
-
+    @Expose
     private Product product;
 
     public ProductModel(){}
@@ -19,15 +20,24 @@ public class ProductModel {
     }
 
     public class Product{
+        @Expose
         private int id = 0;
+        @Expose
         private String productName;
+        @Expose
         private String productBarcodeID;
+        @Expose
         private double productCapitalPrice;
+        @Expose
         private double productSalePrice;
+        @Expose
         private int productMinimum;
+        @Expose
         private int productQty;
-        private CategoryModel category;
-        private CompanyModel company;
+        @Expose
+        private CategoryModel.Category category;
+        @Expose
+        private CompanyModel.Company company;
 
         public int getId() {
             return id;
@@ -85,20 +95,20 @@ public class ProductModel {
             this.productQty = productQty;
         }
 
-        public CategoryModel getCategory() {
-            return category;
-        }
-
-        public void setCategory(CategoryModel category) {
+        public void setCategory(CategoryModel.Category category) {
             this.category = category;
         }
 
-        public CompanyModel getCompany() {
+        public CompanyModel.Company getCompany() {
             return company;
         }
 
-        public void setCompany(CompanyModel company) {
+        public void setCompany(CompanyModel.Company company) {
             this.company = company;
+        }
+
+        public CategoryModel.Category getCategory() {
+            return category;
         }
     }
 }
