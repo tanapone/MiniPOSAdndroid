@@ -82,6 +82,10 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
     int positionInCategoryInSpinner = -1;
     //Gson show all @EXPOSE
     Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+    //ProgressDialog
+    private ProgressDialog progressDialog;
+    //Hander
+    private Handler handler;
 
     @Nullable
     @Override
@@ -107,22 +111,31 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         //Get User from MainActivity
         MainActivity activity = (MainActivity) getActivity();
         user = activity.getUser();
+        //Set ProgessDialog and Hander
+        progressDialog = new ProgressDialog(getContext());
+        handler = new Handler();
+
         //Set list all products
-        try {
-            String responseData = new WSTask(getContext()).execute("/products/mobile/?authKey="+user.getAuthKey(),"GET").get();
-            Type productListType = new TypeToken<ArrayList<ProductModel.Product>>(){}.getType();
-            allProducts = new Gson().fromJson(responseData,productListType);
+        progressDialog.setMessage("กำลังโหลดข้อมูลสินค้า...");
+        progressDialog.show();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                String responseData = null;
+                try {
+                    responseData = new WSTask(getContext()).execute("/products/mobile/?authKey="+user.getAuthKey(),"GET").get();
+                    Type productListType = new TypeToken<ArrayList<ProductModel.Product>>(){}.getType();
+                    allProducts = new Gson().fromJson(responseData,productListType);
+                    progressDialog.dismiss();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
 
-            for(ProductModel.Product product : allProducts){
-                System.out.println("product ID : "+ product.getId());
-                System.out.println("product category name : "+ product.getCategory().getCategoryName());
             }
+        },1000);
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
         return view;
     }
 
@@ -135,7 +148,8 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 Toast.makeText(getActivity(),"ยกเลิกการ แสกนบาร์โค้ด",Toast.LENGTH_SHORT).show();
             } else {
                 barcodeResult = result.getContents();
-                new SearchProductController(getContext()).searchProductByBarcode(barcodeResult);
+                new SearchProductController().searchByCriteria("Barcode");
+
             }
         }
     }
@@ -145,44 +159,28 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.searchButton :
-                try {
-                    searchProduct();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                    new SearchProductController().searchByCriteria("Name");
                 break;
             case R.id.scanButton:
                 scanBarcode();
                 break;
-            case R.id.saveOrderBtn:
-                showConfirmOrderDialog();
-                break;
             case R.id.searchCategoryBtn:
-                showCategoryDialoag();
+                    new SearchProductController().searchByCriteria("Category");
                 break;
             case R.id.testBtn:
-                    for(ProductModel.Product product : allProducts){
-                        System.out.println(product.getProductName()+" Qty : "+product.getProductQty());
-                    }
+                for(ProductModel.Product product : allProducts){
+                    System.out.println(product.getProductName()+" Qty : "+product.getProductQty());
+                }
                 break;
         }
     }
     // searchProductByName
-    public void searchProduct() throws ExecutionException, InterruptedException {
-        String searchProductName = searchText.getText().toString();
-        SearchProductController searchProductController = new SearchProductController(getContext());
-        searchProductController.searchProductByName(searchProductName);
+    public void searchProduct(){
 
     }
     //Scan barcode
     public void scanBarcode(){
         IntentIntegrator.forSupportFragment(this).initiateScan();
-    }
-
-    public void showCategoryDialoag(){
-        new SearchProductController(getContext()).showCategoryDialog();
     }
 
     public void clearListTableLayout(){
@@ -279,7 +277,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             trash.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    new removeOrderController().removeOrder(product);
+                    new RemoveOrderController().removeOrder(product);
                 }
             });
 
@@ -315,95 +313,179 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         return result;
     }
 
-    public void showConfirmOrderDialog(){
-        if(productsInOrder.size()<1){
-            toast("กรุณาเลือกสินค้าก่อนบันทึกสินค้า");
-        }else {
-            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch (which) {
-                        case DialogInterface.BUTTON_POSITIVE:
-                            new confirmOrderController().confirmOrder(productsInOrder);
-                            break;
-                        case DialogInterface.BUTTON_NEGATIVE:
-                            break;
-                    }
-                }
-            };
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            builder.setTitle("ยืนยัน")
-                    .setMessage("คุณยืนยันที่จะบันทึกออเดอร์ ? ")
-                    .setPositiveButton("ตกลง", dialogClickListener)
-                    .setNegativeButton("ยกเลิก", dialogClickListener).show();
-        }
-    }
 
-// SearchProductController
+
+
+    //Controllers
+    //SearchProductController
     public class SearchProductController{
-       private Context context;
 
-       public SearchProductController(Context context){
-           this.context = context;
-       }
-
-       public void searchProductByName(final String productName){
-           final ProgressDialog progressDialog = new ProgressDialog(this.context);
-           progressDialog.setMessage("กำลังโหลด...");
-           progressDialog.show();
-           final Handler handler = new Handler();
-           handler.postDelayed(new Runnable() {
-               @Override
-               public void run() {
-                   try{
-                       String responseData = new WSTask(getContext()).execute("/product/mobile/searchName?authKey="+user.getAuthKey()
-                               +"&name="+productName,"GET").get();
-                       Type productListType = new TypeToken<ArrayList<ProductModel.Product>>(){}.getType();
-                       List<ProductModel.Product> productList = new Gson().fromJson(responseData,productListType);
-                       searchProducts.clear();
-                       searchProducts = productList;
-                       if(productList.size()<1){
-                           toast("ไม่พบข้อมูลสินค้า");
-                       }else{
-                           //Update searched product if product already in cart
-                           for(ProductModel.Product productFromSearch : searchProducts){
-                                for(int i=0; i<allProducts.size();i++){
-                                    if(allProducts.get(i).getId() == productFromSearch.getId()){
-                                        productFromSearch.setProductQty(allProducts.get(i).getProductQty());
+        public void searchByCriteria(String criteria){
+            if(criteria.equalsIgnoreCase("Name")){
+                searchProducts.clear();
+                final String productSearchName = searchText.getText().toString();
+                progressDialog.setMessage("กำลังโหลด...");
+                progressDialog.show();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String responseData = new WSTask(getContext()).execute("/product/mobile/searchName?authKey="+user.getAuthKey()
+                                    +"&name="+productSearchName,"GET").get();
+                            Type productListType = new TypeToken<ArrayList<ProductModel.Product>>(){}.getType();
+                            searchProducts = new Gson().fromJson(responseData,productListType);
+                            progressDialog.dismiss();
+                            //Set searchProduct
+                            for(int i=0;i<allProducts.size();i++){
+                                for(int j=searchProducts.size()-1;j>=0;j--){
+                                    if(searchProducts.get(j).getId() == allProducts.get(i).getId()){
+                                        searchProducts.get(j).setProductQty(allProducts.get(i).getProductQty());
                                     }
                                 }
+                            }
+                            showSelectProductDialog(searchProducts);
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        }
+
+
+
+                    }
+                },1000);
+
+            }else if(criteria.equalsIgnoreCase("Barcode")){
+                searchProducts.clear();
+                progressDialog.setMessage("กำลังโหลด...");
+                progressDialog.show();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            String responseData = new WSTask(getContext()).execute("/product/mobile/searchBarcode?authKey="+user.getAuthKey()
+                                    +"&barcodeID="+barcodeResult,"GET").get();
+                            ProductModel product = new ProductModel(responseData);
+                            progressDialog.dismiss();
+                            showSetQuantityDialog(product.getProduct());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },1000);
+
+            }else{
+                searchProducts.clear();
+                //Search by category
+                progressDialog.setMessage("กำลังโหลดข้อมูลประเภทสินค้า...");
+                progressDialog.show();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            // Set all categories
+                            allCategories.clear();
+                            String responseData = new WSTask(getContext()).execute("/categories?authKey=" + user.getAuthKey(), "GET").get();
+                            Type categoriesListType = new TypeToken<ArrayList<CategoryModel.Category>>() {}.getType();
+                            allCategories = new Gson().fromJson(responseData, categoriesListType);
+                            showSelectCategoryDialog(allCategories);
+                            progressDialog.dismiss();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (ExecutionException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },1000);
+            }
+        }
+
+        //
+        public void showSelectCategoryDialog(List<CategoryModel.Category> categories){
+            //Define select category dialog
+            LayoutInflater inflater;
+            View dialogView;
+            inflater = LayoutInflater.from(getActivity());
+            dialogView = inflater.inflate(R.layout.select_category_dialog, null);
+            final Spinner categorySpinner = (Spinner) dialogView.findViewById(R.id.categorySpinner);
+            final Button searchProductsByCategoryBtn = (Button) dialogView.findViewById(R.id.searchProductsByCategoryBtn);
+            //Define category name list
+            List<String> categoriesNamesArray = new ArrayList<String>();
+            //Set categories names
+            for(CategoryModel.Category category : categories){
+                categoriesNamesArray.add(category.getCategoryName());
+            }
+            //Define arrayAdapter for category spinner
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.support_simple_spinner_dropdown_item,categoriesNamesArray);
+            //Set adaptor for category spinner
+            categorySpinner.setAdapter(arrayAdapter);
+
+            //Check when select position
+            categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    positionInCategoryInSpinner = position;
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+
+                }
+            });
+
+            final AlertDialog selectCategorydialog = new AlertDialog.Builder(getActivity())
+                    .setTitle("กรุณาเลือกประเภทสินค้า")
+                    .setView(dialogView).create();
+            selectCategorydialog.show();
+
+            searchProductsByCategoryBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    final CategoryModel.Category category = allCategories.get(positionInCategoryInSpinner);
+                    searchProducts.clear();
+
+
+                    //
+                   progressDialog.setMessage("กำลังโหลดข้อมูลสินค้า...");
+                   progressDialog.show();
+                   handler.postDelayed(new Runnable() {
+                       @Override
+                       public void run() {
+                           try {
+                               String responseData = new WSTask(getContext()).execute("/product/mobile/category/"
+                                       +category.getId()+"?authKey="+user.getAuthKey(),"GET").get();
+                               Type productListType = new TypeToken<ArrayList<ProductModel.Product>>(){}.getType();
+                               searchProducts = new Gson().fromJson(responseData,productListType);
+                               progressDialog.dismiss();
+                               //Set searchProduct
+                               for(int i=0;i<allProducts.size();i++){
+                                   for(int j=searchProducts.size()-1;j>=0;j--){
+                                       if(searchProducts.get(j).getId() == allProducts.get(i).getId()){
+                                           searchProducts.get(j).setProductQty(allProducts.get(i).getProductQty());
+                                       }
+                                   }
+                               }
+                               showSelectProductDialog(searchProducts);
+                               selectCategorydialog.dismiss();
+                           } catch (InterruptedException e) {
+                               e.printStackTrace();
+                           } catch (ExecutionException e) {
+                               e.printStackTrace();
                            }
-                           showSelectProductDialog(searchProducts);
                        }
-                       progressDialog.dismiss();
-                   }catch (InterruptedException e) {
-                       e.printStackTrace();
-                   } catch (ExecutionException e) {
-                       e.printStackTrace();
-                   }
-               }
-           },1000);
-       }
+                   },1000);
 
-       public void searchProductByBarcode(String barcode){
-           boolean found = false;
-           int index = -1;
-           for(int i=0;i<allProducts.size();i++){
-               if(allProducts.get(i).getProductBarcodeID().equalsIgnoreCase(barcode)){
-                   found = true;
-                   index = i;
-               }
-           }
+                }
+            });
 
-           if(found){
-               new addOrderController().addOrder(allProducts.get(index));
-           }else{
-               toast("ไม่พบข้อมูล");
-           }
-       }
+        }
 
-        public void showSelectProductDialog(List<ProductModel.Product> productArrayList){
-           //Define product name array list to show in dialog
+        //Show select product dialog
+        public void showSelectProductDialog(final List<ProductModel.Product> productArrayList){
+            //Define product name array list to show in dialog
             ArrayList<String> productNameArrayList = new ArrayList<String>();
 
             productNameArrayList.clear();
@@ -430,163 +512,27 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             productListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                    new addOrderController().addOrder(searchProducts.get(position));
+                    showSetQuantityDialog(productArrayList.get(position));
                     selectProductdialog.dismiss();
                 }
             });
             selectProductdialog.show();
         }
 
-        public void showCategoryDialog() {
-           final ProgressDialog progressDialog = new ProgressDialog(getContext());
-           progressDialog.setMessage("กำลังโหลด...");
-           progressDialog.show();
-           final Handler handler = new Handler();
-           handler.postDelayed(new Runnable() {
-               @Override
-               public void run() {
-                   try {
-                       // Set all categories
-                       allCategories.clear();
-                       String responseData = new WSTask(getContext()).execute("/categories?authKey=" + user.getAuthKey(), "GET").get();
-                       Type categoriesListType = new TypeToken<ArrayList<CategoryModel.Category>>() {}.getType();
-                       allCategories = new Gson().fromJson(responseData, categoriesListType);
-                       checkAllCategories();
-                       progressDialog.dismiss();
-                   } catch (InterruptedException e) {
-                       e.printStackTrace();
-                   } catch (ExecutionException e) {
-                       e.printStackTrace();
-                   }
-               }
-           },1000);
-
-        }
-
-        public void checkAllCategories(){
-            //Check category available
-            if (allCategories.size() < 1) {
-                toast("ไม่พบรายการประเภทสินค้าในระบบ");
-            }else{
-                //Define select category dialog
-                LayoutInflater inflater;
-                View dialogView;
-                inflater = LayoutInflater.from(getActivity());
-                dialogView = inflater.inflate(R.layout.select_category_dialog, null);
-                final Spinner categorySpinner = (Spinner) dialogView.findViewById(R.id.categorySpinner);
-                final Button searchProductsByCategoryBtn = (Button) dialogView.findViewById(R.id.searchProductsByCategoryBtn);
-                //Define category name list
-                List<String> categoriesNamesArray = new ArrayList<String>();
-                //Set categories names
-                for(CategoryModel.Category category : allCategories){
-                    categoriesNamesArray.add(category.getCategoryName());
-                }
-                //Define arrayAdapter for category spinner
-                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.support_simple_spinner_dropdown_item,categoriesNamesArray);
-                //Set adaptor for category spinner
-                categorySpinner.setAdapter(arrayAdapter);
-
-                //Check when select position
-                categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        positionInCategoryInSpinner = position;
-                    }
-
-                    @Override
-                    public void onNothingSelected(AdapterView<?> parent) {
-
-                    }
-                });
-
-                final AlertDialog selectCategorydialog = new AlertDialog.Builder(getActivity())
-                        .setTitle("กรุณาเลือกประเภทสินค้า")
-                        .setView(dialogView).create();
-                selectCategorydialog.show();
-
-                searchProductsByCategoryBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        CategoryModel.Category category = allCategories.get(positionInCategoryInSpinner);
-                        List<ProductModel.Product> productsFromCategoy = new ArrayList<ProductModel.Product>();
-                        for(ProductModel.Product product : allProducts){
-                            if(product.getCategory().getId() == category.getId()){
-                                productsFromCategoy.add(product);
-                            }
-                        }
-                        showSelectProductsDialogFromCategory(productsFromCategoy);
-                        selectCategorydialog.dismiss();
-                    }
-                });
-
-            }
-        }
-
-        public void showSelectProductsDialogFromCategory(final List<ProductModel.Product> products){
-            //Define product name array list to show in dialog
-            ArrayList<String> productNameArrayList = new ArrayList<String>();
-
-            //loop set line string to show in dialog get list from agument
-            for(ProductModel.Product product : products){
-                productNameArrayList.add(product.getProductName()+
-                        "\n"+"จำนวนสินค้า"+
-                        " "+product.getProductQty());
-            }
-            //defind dialog show list searched product
-            LayoutInflater inflater;
-            View dialogView;
-            ListView productListView;
-            inflater = LayoutInflater.from(getActivity());
-            dialogView = inflater.inflate(R.layout.product_select_dialog, null);
-            productListView = (ListView) dialogView.findViewById(R.id.productListView);
-            ArrayAdapter<String> productListViewAdapter = new ArrayAdapter<String>(getActivity(),android.R.layout.simple_expandable_list_item_1,productNameArrayList);
-
-            final AlertDialog selectProductdialogFromCategory = new AlertDialog.Builder(getActivity())
-                    .setTitle("กรุณาเลือกสินค้า")
-                    .setView(dialogView).create();
-            selectProductdialogFromCategory.show();
-            //set list to list view
-            productListView.setAdapter(productListViewAdapter);
-            //set list on item click
-            productListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    new addOrderController().addOrder(products.get(position));
-                    selectProductdialogFromCategory.dismiss();
-                }
-            });
-
-        }
-
-    }
-
-    public class addOrderController{
-        //Find same product in array
-        public int findSameProduct(ProductModel.Product product){
-            //Check same product
-            int position = -1;
-            for(int i=0;i<productsInOrder.size();i++){
-                if(product.getId() == productsInOrder.get(i).getId()){
-                    position = i;
-                }
-            }
-            return position;
-        }
-
-        public void addOrder(final ProductModel.Product product){
-            //Set dialog from layout
+        public void showSetQuantityDialog(final ProductModel.Product product){
+            //Set SetQuantityDialog
             LayoutInflater inflater;
             final View dialogView;
+            ListView productListView;
             inflater = LayoutInflater.from(getActivity());
             dialogView = inflater.inflate(R.layout.set_quantity_dialog, null);
-            final AlertDialog dialog = new AlertDialog.Builder(getActivity())
-                    .setTitle("กรุณากรอกจำนวนสินค้า")
-                    .setMessage("จำนวนสินค้าคงเหลือ : "+product.getProductQty())
+            final AlertDialog setQuantityDialog = new AlertDialog.Builder(getActivity())
+                    .setTitle("กรุณาเลือกสินค้า")
+                    .setMessage("จำนวนสินค้าในคลัง : "+product.getProductQty()+" ชิ้น")
                     .setPositiveButton("ตกลง", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            //Check quantitiy
+                            //
                             int quantity = 0;
                             EditText quantityEditText = (EditText) dialogView.findViewById(R.id.qtyEditText);
 
@@ -597,53 +543,63 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                             }
                             //Check Stock less then quantity
                             if(quantity > product.getProductQty()){
-                                Toast.makeText(getActivity(),"จำนวนสินค้าที่คุณกรอกมีมากกว่าจำนวนสินค้าที่อยู่ภายในคลัง",Toast.LENGTH_LONG).show();
+                                toast("จำนวนสินค้าที่คุณกรอกมีมากกว่าจำนวนสินค้าที่อยู่ภายในคลัง");
                             }else{
-                                if(positionInCategoryInSpinner==-1){
-                                    //Update list all products stock
-                                    for(int i=0;i<allProducts.size();i++){
-                                        if(product.getId() == allProducts.get(i).getId()){
-                                            int qty = allProducts.get(i).getProductQty() - quantity;
-                                            allProducts.get(i).setProductQty(qty);
-                                            product.setProductQty(quantity);
-                                            break;
-                                        }
-                                    }
-                                }else{
-                                    for(int i=0;i<allProducts.size();i++){
-                                        if(product.getId() == allProducts.get(i).getId()){
-                                            int qty = allProducts.get(i).getProductQty() - quantity;
-                                            product.setProductQty(quantity);
-                                            toast(product.getProductName());
-                                            allProducts.get(i).setProductQty(qty);
-                                            break;
-                                        }
+                                //Update stock
+                                for(int i =0;i<allProducts.size();i++){
+                                    if(product.getId() == allProducts.get(i).getId()){
+                                        int qty = allProducts.get(i).getProductQty() - quantity;
+                                        allProducts.get(i).setProductQty(qty);
+                                        break;
                                     }
                                 }
-
-                                //Find same product if not found return -1
-                                int findSameProductPoistion = findSameProduct(product);
-                                if(findSameProductPoistion!=-1){
-                                    //find same product and replace
-                                    int newQty = productsInOrder.get(findSameProductPoistion).getProductQty() + quantity;
-                                    product.setProductQty(newQty);
-                                    productsInOrder.set(findSameProductPoistion,product);
-                                }else{
-                                    //Add product into cart
-                                    product.setProductQty(quantity);
-                                    productsInOrder.add(product);
-                                }
-                                updateListTableLayout();
+                                //Use add order
+                                product.setProductQty(quantity);
+                                new AddOrderController().addOrder(product);
                             }
-
                         }
                     })
                     .setView(dialogView).create();
-            dialog.show();
+            setQuantityDialog.show();
+
+
+        }
+
+    }
+
+    //AddOrderController
+    public class AddOrderController{
+
+        public int getSameProductIndexInOrder(ProductModel.Product product){
+            int index = -1;
+            for(int i=0;i<productsInOrder.size();i++){
+                if(product.getId() == productsInOrder.get(i).getId()){
+                    index = i;
+                    break;
+                }
+            }
+            return index;
+        }
+
+        public void addOrder(ProductModel.Product product){
+            //if not found same product in order will return -1
+            int sameProductInOrderIndex = getSameProductIndexInOrder(product);
+            if(sameProductInOrderIndex!=-1){
+                int newQty = (product.getProductQty() + productsInOrder.get(sameProductInOrderIndex).getProductQty());
+                product.setProductQty(newQty);
+                //Update product in order
+                productsInOrder.set(sameProductInOrderIndex,product);
+            }else{
+                productsInOrder.add(product);
+            }
+
+            updateListTableLayout();
         }
     }
 
-    public class removeOrderController{
+
+    //RemoveOrderController
+    public class RemoveOrderController{
         public void removeOrder(final ProductModel.Product product){
             DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                 @Override
@@ -653,10 +609,16 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                             //Update stock
                             int index = 0;
                             for(int i=0;i<allProducts.size();i++){
-                                if(product.getId() == allProducts.get(i).getId()){
-                                    int qty = productsInOrder.get(i).getProductQty();
+                                if(allProducts.get(i).getId() == product.getId()){
+                                    int qty = product.getProductQty();
                                     int newQty = allProducts.get(i).getProductQty() + qty;
                                     allProducts.get(i).setProductQty(newQty);
+                                    break;
+                                }
+                            }
+                            // Get position for remove
+                            for(int i=0;i<productsInOrder.size();i++){
+                                if(product.getId() == productsInOrder.get(i).getId()){
                                     index = i;
                                     break;
                                 }
@@ -678,7 +640,8 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         }
     }
 
-    public class confirmOrderController{
+    //ConfrimOrderController
+    public class ConfirmOrderController{
 
         public void confirmOrder(List<ProductModel.Product> productList){
             OrderModel orderModel = new OrderModel();
@@ -696,12 +659,12 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 String responseData = new WSTask(getContext()).execute("/create/order?authKey="+user.getAuthKey(),"POST",gson.toJson(orderModel).toString()).get();
                 MessageModel messageModel;
                 if(responseData!=null){
-                        messageModel = new MessageModel(responseData);
-                        if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Success")){
-                            toast("บันทึกสำเร็จ");
-                            productsInOrder.clear();
-                            updateListTableLayout();
-                        }
+                    messageModel = new MessageModel(responseData);
+                    if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Success")){
+                        toast("บันทึกสำเร็จ");
+                        productsInOrder.clear();
+                        updateListTableLayout();
+                    }
                 }
 
             } catch (InterruptedException e) {
@@ -712,6 +675,5 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         }
 
     }
-
 
 }
