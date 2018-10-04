@@ -416,6 +416,12 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                             String responseData = new WSTask(getContext()).execute("/product/mobile/searchBarcode?authKey="+user.getAuthKey()
                                     +"&barcodeID="+barcodeResult,"GET").get();
                             ProductModel product = new ProductModel(responseData);
+                            //Set searchProduct by barcode
+                            for(int i=0;i<allProducts.size();i++){
+                                    if(product.getProduct().getId() == allProducts.get(i).getId()){
+                                        product.getProduct().setProductQty(allProducts.get(i).getProductQty());
+                                    }
+                            }
                             progressDialog.dismiss();
                             showSetQuantityDialog(product.getProduct());
                         } catch (InterruptedException e) {
@@ -438,7 +444,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                         try {
                             // Set all categories
                             allCategories.clear();
-                            String responseData = new WSTask(getContext()).execute("/categories?authKey=" + user.getAuthKey(), "GET").get();
+                            String responseData = new WSTask(getContext()).execute("/categories/mobile?authKey=" + user.getAuthKey(), "GET").get();
                             Type categoriesListType = new TypeToken<ArrayList<CategoryModel.Category>>() {}.getType();
                             allCategories = new Gson().fromJson(responseData, categoriesListType);
                             showSelectCategoryDialog(allCategories);
