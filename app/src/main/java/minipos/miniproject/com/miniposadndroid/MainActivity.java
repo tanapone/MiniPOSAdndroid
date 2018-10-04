@@ -14,6 +14,8 @@ import android.view.Window;
 import android.widget.Toast;
 
 import minipos.miniproject.com.miniposadndroid.Fragment.CashierFragment;
+import minipos.miniproject.com.miniposadndroid.Fragment.ListLessProductFragment;
+import minipos.miniproject.com.miniposadndroid.Fragment.ViewProductsFragment;
 import minipos.miniproject.com.miniposadndroid.Models.UserModel;
 
 public class MainActivity extends AppCompatActivity implements  NavigationView.OnNavigationItemSelectedListener{
@@ -61,6 +63,16 @@ public class MainActivity extends AppCompatActivity implements  NavigationView.O
                 getSupportFragmentManager().beginTransaction().
                         replace(R.id.fragment_container, new CashierFragment()).commit();
 //                Toast.makeText(MainActivity.this,"Cashier",Toast.LENGTH_SHORT).show();
+                drawer.closeDrawer(GravityCompat.START);
+                break;
+            case R.id.viewProductMenu:
+                getSupportFragmentManager().beginTransaction().
+                        replace(R.id.fragment_container, new ViewProductsFragment()).commit();
+                drawer.closeDrawer(GravityCompat.START);
+                break;
+            case R.id.lessProductMenu:
+                getSupportFragmentManager().beginTransaction().
+                        replace(R.id.fragment_container, new ListLessProductFragment()).commit();
                 drawer.closeDrawer(GravityCompat.START);
                 break;
             case R.id.logoutMenu:

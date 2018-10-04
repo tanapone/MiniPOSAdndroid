@@ -47,6 +47,7 @@ import minipos.miniproject.com.miniposadndroid.Models.OrderDetailModel;
 import minipos.miniproject.com.miniposadndroid.Models.OrderModel;
 import minipos.miniproject.com.miniposadndroid.Models.ProductModel;
 import minipos.miniproject.com.miniposadndroid.Models.UserModel;
+import minipos.miniproject.com.miniposadndroid.Printer.PrinterHelper;
 import minipos.miniproject.com.miniposadndroid.R;
 import minipos.miniproject.com.miniposadndroid.WSTask.WSTask;
 
@@ -65,7 +66,8 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
     private TextView noProductInOrderTextView;
     private Button saveOrderBtn;
     private Button searchCategoryBtn;
-    private Button testBtn;
+    private PrinterHelper printerHelper;
+    private Button printResceiptBtn;
     // list all products
     private List<ProductModel.Product> allProducts = new ArrayList<ProductModel.Product>();
     // list by search product
@@ -101,13 +103,13 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         noProductInOrderTextView = (TextView) view.findViewById(R.id.noProductInOrderTextView);
         saveOrderBtn = (Button) view.findViewById(R.id.saveOrderBtn);
         searchCategoryBtn = (Button) view.findViewById(R.id.searchCategoryBtn);
-        testBtn = (Button) view.findViewById(R.id.testBtn);
+        printResceiptBtn = (Button) view.findViewById(R.id.printResceiptBtn);
 
         searchButton.setOnClickListener(this);
         scanButton.setOnClickListener(this);
         saveOrderBtn.setOnClickListener(this);
         searchCategoryBtn.setOnClickListener(this);
-        testBtn.setOnClickListener(this);
+        printResceiptBtn.setOnClickListener(this);
         //Get User from MainActivity
         MainActivity activity = (MainActivity) getActivity();
         user = activity.getUser();
@@ -115,8 +117,12 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         progressDialog = new ProgressDialog(getContext());
         handler = new Handler();
 
+        //Set printerHelper
+        printerHelper = new PrinterHelper(getContext());
+
         //Set list all products
         progressDialog.setMessage("กำลังโหลดข้อมูลสินค้า...");
+        progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.show();
         handler.postDelayed(new Runnable() {
             @Override
@@ -167,10 +173,11 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             case R.id.searchCategoryBtn:
                     new SearchProductController().searchByCriteria("Category");
                 break;
-            case R.id.testBtn:
-                for(ProductModel.Product product : allProducts){
-                    System.out.println(product.getProductName()+" Qty : "+product.getProductQty());
-                }
+            case R.id.saveOrderBtn:
+                new ConfirmOrderController().confirmOrder(productsInOrder);
+                break;
+            case R.id.printResceiptBtn:
+                new PrintReceiptController().settingUpOrder();
                 break;
         }
     }
@@ -325,6 +332,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 searchProducts.clear();
                 final String productSearchName = searchText.getText().toString();
                 progressDialog.setMessage("กำลังโหลด...");
+                progressDialog.setCanceledOnTouchOutside(false);
                 progressDialog.show();
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -359,6 +367,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             }else if(criteria.equalsIgnoreCase("Barcode")){
                 searchProducts.clear();
                 progressDialog.setMessage("กำลังโหลด...");
+                progressDialog.setCanceledOnTouchOutside(false);
                 progressDialog.show();
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -381,6 +390,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 searchProducts.clear();
                 //Search by category
                 progressDialog.setMessage("กำลังโหลดข้อมูลประเภทสินค้า...");
+                progressDialog.setCanceledOnTouchOutside(false);
                 progressDialog.show();
                 handler.postDelayed(new Runnable() {
                     @Override
@@ -403,7 +413,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             }
         }
 
-        //
+        //Show select category dialog
         public void showSelectCategoryDialog(List<CategoryModel.Category> categories){
             //Define select category dialog
             LayoutInflater inflater;
@@ -450,6 +460,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
 
                     //
                    progressDialog.setMessage("กำลังโหลดข้อมูลสินค้า...");
+                   progressDialog.setCanceledOnTouchOutside(false);
                    progressDialog.show();
                    handler.postDelayed(new Runnable() {
                        @Override
@@ -643,37 +654,108 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
     //ConfrimOrderController
     public class ConfirmOrderController{
 
-        public void confirmOrder(List<ProductModel.Product> productList){
-            OrderModel orderModel = new OrderModel();
-            List<OrderDetailModel> orderDetailModels = new ArrayList<OrderDetailModel>();
-            for(ProductModel.Product product : productList){
-                OrderDetailModel orderDetailModel = new OrderDetailModel();
-                orderDetailModel.setProduct(product);
-                orderDetailModel.setProductAmount(product.getProductQty());
-                orderDetailModels.add(orderDetailModel);
-            }
-            orderModel.setOrderdetails(orderDetailModels);
-            orderModel.setUser(user);
-            try {
-                System.out.println("Order = "+new Gson().toJson(orderModel).toString());
-                String responseData = new WSTask(getContext()).execute("/create/order?authKey="+user.getAuthKey(),"POST",gson.toJson(orderModel).toString()).get();
-                MessageModel messageModel;
-                if(responseData!=null){
-                    messageModel = new MessageModel(responseData);
-                    if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Success")){
-                        toast("บันทึกสำเร็จ");
-                        productsInOrder.clear();
-                        updateListTableLayout();
-                    }
+        public void confirmOrder(List<ProductModel.Product> productList) {
+            if (productList.size() < 1) {
+                toast("กรุณาเลือกสินค้าก่อนทำการบันทึกการขาย");
+            } else {
+                OrderModel orderModel = new OrderModel();
+                List<OrderDetailModel> orderDetailModels = new ArrayList<OrderDetailModel>();
+                for (ProductModel.Product product : productList) {
+                    OrderDetailModel orderDetailModel = new OrderDetailModel();
+                    orderDetailModel.setProduct(product);
+                    orderDetailModel.setProductAmount(product.getProductQty());
+                    //
+                    orderDetailModels.add(orderDetailModel);
                 }
+                System.out.println(new Gson().toJson(orderDetailModels));
+                orderModel.getOrder().setOrderdetails(orderDetailModels);
+                orderModel.getOrder().setUser(user);
+                try {
+                    System.out.println("Order = " + new Gson().toJson(orderModel.getOrder()).toString());
+                    String responseData = new WSTask(getContext()).execute("/create/order?authKey=" + user.getAuthKey(), "POST", gson.toJson(orderModel.getOrder()).toString()).get();
+                    MessageModel messageModel;
+                    if (responseData != null) {
+                        messageModel = new MessageModel(responseData);
+                        if (messageModel.getMessage().getMessageText().equalsIgnoreCase("Success")) {
+                            toast("บันทึกสำเร็จ");
+                            if(printResceiptBtn.isEnabled()==false){
+                                printResceiptBtn.setEnabled(true);
+                            }
+                        }
+                    }
 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
     }
+
+    //PrintReceiptController
+    public class PrintReceiptController {
+        //define order for getting order id
+        OrderModel order;
+
+        public void settingUpOrder() {
+            progressDialog.setMessage("กำลังตั้งค่าหมายเลขออเดอร์...");
+            progressDialog.setCanceledOnTouchOutside(false);
+            progressDialog.show();
+
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        String responseData = new WSTask(getContext()).execute("/order/last?authKey=" + user.getAuthKey(), "GET").get();
+                        order = new OrderModel(responseData);
+                        progressDialog.dismiss();
+                        if (order.getOrder().getId() == 0) {
+                            toast("เกิดข้อผิดพลาดในการตั้งค่าออเดอร์");
+                        } else {
+                            checkBluetoothConnected();
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, 1000);
+        }
+
+        public void checkBluetoothConnected() {
+            if (printerHelper.connectedBluetooth() == false) {
+                printerHelper.findBuletooth();
+                toast("หลังจากเลือกเครื่องปริ้นท์บลูธูทเสร็จ กรุณากดปุ่มพิมพ์ใบเสร็จอีกครั้ง");
+            } else {
+                printReceipt();
+            }
+        }
+
+        public void printReceipt(){
+            printerHelper.resetPrint();
+            printerHelper.setCenter();
+            printerHelper.printText("MiniPOS",25,"center");
+            printerHelper.printText("-----------------------------------------", 20, "center");
+            printerHelper.printText("หมายเลขออเดอร์ : "+order.getOrder().getId(),25,"center");
+            printerHelper.printText("รายการสินค้าทั้งหมด",25,"left");
+            for (ProductModel.Product product : productsInOrder) {
+                printerHelper.printText(product.getProductName() + " x" + product.getProductQty(), 20, "left");
+                printerHelper.printText("ราคาสินค้า" + " " + product.getProductSalePrice() + " " + "ต่อชิ้น", 20, "opppsite");
+                printerHelper.printNewLine();
+                printerHelper.printNewLine();
+            }
+            printerHelper.printText("-----------------------------------------", 20, "center");
+            printerHelper.printText("ราคารวม : "+String.valueOf(totalPriceTextView.getText().toString().trim()), 25, "opppsite");
+            printerHelper.printNewLine();
+            printerHelper.printText("วันที่ทำรายการ"+ " " + printerHelper.getDate(), 23, "center");
+            printResceiptBtn.setEnabled(false);
+            productsInOrder.clear();
+            updateListTableLayout();
+        }
+    }
+
 
 }

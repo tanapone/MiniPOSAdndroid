@@ -2,4 +2,7 @@
     <string name="app_name">MiniPOSAdndroid</string>
     <string name="navigation_drawer_open">Open naviation drawer</string>
     <string name="navigation_drawer_close">Open naviation drawer</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
