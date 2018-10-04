@@ -104,13 +104,35 @@
                     android:textColor="#fff"
                     android:text="บันทึกการขาย"
                     android:layout_marginTop="10dp"/>
-                <Button
-                    android:layout_marginTop="10dp"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="พิมพ์ใบเสร็จรับเงิน"
-                    android:id="@+id/printResceiptBtn"
-                    android:enabled="false"/>
+                    android:layout_height="wrap_content">
+                    <TableLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stretchColumns="*">
+                        <TableRow>
+
+                            <Button
+                                android:id="@+id/moneyChangeBtn"
+                                android:layout_marginTop="10dp"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:text="คำนวณเงินทอน"
+                                android:enabled="false"
+                                />
+
+                            <Button
+                            android:layout_marginTop="10dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="พิมพ์ใบเสร็จ"
+                            android:id="@+id/printResceiptBtn"
+                            android:enabled="false"/>
+
+                        </TableRow>
+                    </TableLayout>a
+                </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

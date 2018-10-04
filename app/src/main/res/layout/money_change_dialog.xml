@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="10dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="กรอกจำนวนเงินที่ได้รับจากลูกค้า"/>
+        <EditText
+            android:id="@+id/moneyChangeEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="จำนวนเงินทอน : "
+                android:textSize="20dp"/>
+            <TextView
+                android:id="@+id/moneyChangeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0 บาท"
+                android:textColor="#008000"
+                android:textSize="20dp" />
+        </LinearLayout>
+   <Button
+       android:id="@+id/calMoneyChangeBtn"
+       android:layout_marginTop="10dp"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:text="คำนวณเงินทอน"
+       android:background="@color/colorAccent"
+       android:textColor="#ffffff"
+       />
+    </LinearLayout>
+
+</LinearLayout>

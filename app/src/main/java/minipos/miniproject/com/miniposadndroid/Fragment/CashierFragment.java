@@ -66,6 +66,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
     private TextView noProductInOrderTextView;
     private Button saveOrderBtn;
     private Button searchCategoryBtn;
+    private Button moneyChangeBtn;
     private PrinterHelper printerHelper;
     private Button printResceiptBtn;
     // list all products
@@ -80,6 +81,8 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
     private double sumPrice =0;
     //Total price
     private double totalPrice = 0;
+    //TotalPrice for moneyChange
+    private double totalPriceForMoneyChange = 0;
     //Position for check category
     int positionInCategoryInSpinner = -1;
     //Gson show all @EXPOSE
@@ -104,12 +107,14 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         saveOrderBtn = (Button) view.findViewById(R.id.saveOrderBtn);
         searchCategoryBtn = (Button) view.findViewById(R.id.searchCategoryBtn);
         printResceiptBtn = (Button) view.findViewById(R.id.printResceiptBtn);
+        moneyChangeBtn = (Button) view.findViewById(R.id.moneyChangeBtn);
 
         searchButton.setOnClickListener(this);
         scanButton.setOnClickListener(this);
         saveOrderBtn.setOnClickListener(this);
         searchCategoryBtn.setOnClickListener(this);
         printResceiptBtn.setOnClickListener(this);
+        moneyChangeBtn.setOnClickListener(this);
         //Get User from MainActivity
         MainActivity activity = (MainActivity) getActivity();
         user = activity.getUser();
@@ -179,12 +184,12 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             case R.id.printResceiptBtn:
                 new PrintReceiptController().settingUpOrder();
                 break;
+            case R.id.moneyChangeBtn:
+                showChangeMoneyDialog();
+                break;
         }
     }
-    // searchProductByName
-    public void searchProduct(){
 
-    }
     //Scan barcode
     public void scanBarcode(){
         IntentIntegrator.forSupportFragment(this).initiateScan();
@@ -230,16 +235,50 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         listItemTableLayout.addView(tableRow);
     }
 
+    //Show change money dialog
+    public void showChangeMoneyDialog(){
+        LayoutInflater inflater;
+        View dialogView;
+        inflater = LayoutInflater.from(getActivity());
+        dialogView = inflater.inflate(R.layout.money_change_dialog, null);
+        final EditText moneyChangeEditText = (EditText) dialogView.findViewById(R.id.moneyChangeEditText);
+        final TextView moneyChangeTextView = (TextView) dialogView.findViewById(R.id.moneyChangeTextView);
+        Button calMoneyChangeBtn = (Button) dialogView.findViewById(R.id.calMoneyChangeBtn);
+
+        calMoneyChangeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                double moneyInput = Double.valueOf(moneyChangeEditText.getText().toString());
+                if(moneyInput < totalPriceForMoneyChange) {
+                toast("จำนวนเงินที่กรอกน้อยกว่าเงินรวมของรายการขาย");
+                }else {
+                    double moneyChange = (moneyInput - totalPriceForMoneyChange);
+                    moneyChangeTextView.setText(moneyChange + " บาท");
+                }
+            }
+        });
+
+        final AlertDialog moneyChangeDialog = new AlertDialog.Builder(getActivity())
+                .setTitle("คำนวณเงินทอนให้แก่ลูกค้า")
+                .setMessage("ราคารวม : "+totalPriceForMoneyChange + " บาท")
+                .setView(dialogView).create();
+        moneyChangeDialog.show();
+    }
+
     public void updateListTableLayout(){
         //Check product in order to show no product in order text
         if(productsInOrder.size()>0){
             noProductInOrderTextView.setVisibility(View.INVISIBLE);
             //Clear list table layout
             clearListTableLayout();
+            //Set moneyChangeBtn able to click
+            moneyChangeBtn.setEnabled(true);
 
         }else{
             noProductInOrderTextView.setVisibility(View.VISIBLE);
             listItemTableLayout.removeAllViews();
+            //Set moneyChangeBtn Unable to click
+            moneyChangeBtn.setEnabled(false);
         }
 
 
@@ -310,6 +349,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         }
         totalPrice+=sumPrice;
         totalPriceTextView.setText(totalPrice+" บาท");
+        totalPriceForMoneyChange = totalPrice;
         totalPrice = 0;
     }
     public String subProductName(String productName){
