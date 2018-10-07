@@ -195,46 +195,6 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         IntentIntegrator.forSupportFragment(this).initiateScan();
     }
 
-    public void clearListTableLayout(){
-        listItemTableLayout.removeAllViews();
-        TextView headerName = new TextView(getContext());
-        TextView headerQty = new TextView(getContext());
-        TextView headerPrice = new TextView(getContext());
-        TextView headerDelete = new TextView(getContext());
-
-        headerName.setPadding(10,10,10,10);
-        headerName.setBackgroundColor(Color.parseColor("#009688"));
-        headerName.setText("ชื่อสินค้า");
-        headerName.setTextColor(Color.WHITE);
-        headerName.setGravity(Gravity.CENTER);
-
-        headerQty.setPadding(10,10,10,10);
-        headerQty.setBackgroundColor(Color.parseColor("#009688"));
-        headerQty.setText("จำนวนสินค้า");
-        headerQty.setTextColor(Color.WHITE);
-        headerQty.setGravity(Gravity.CENTER);
-
-        headerPrice.setPadding(10,10,10,10);
-        headerPrice.setBackgroundColor(Color.parseColor("#009688"));
-        headerPrice.setText("ราคา");
-        headerPrice.setTextColor(Color.WHITE);
-        headerPrice.setGravity(Gravity.CENTER);
-
-        headerDelete.setPadding(10,10,10,10);
-        headerDelete.setBackgroundColor(Color.parseColor("#009688"));
-        headerDelete.setText("ลบ");
-        headerDelete.setTextColor(Color.WHITE);
-        headerDelete.setGravity(Gravity.CENTER);
-
-        TableRow tableRow = new TableRow(getContext());
-        tableRow.addView(headerName);
-        tableRow.addView(headerQty);
-        tableRow.addView(headerPrice);
-        tableRow.addView(headerDelete);
-
-        listItemTableLayout.addView(tableRow);
-    }
-
     //Show change money dialog
     public void showChangeMoneyDialog(){
         LayoutInflater inflater;
@@ -265,81 +225,6 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         moneyChangeDialog.show();
     }
 
-    public void updateListTableLayout(){
-        //Check product in order to show no product in order text
-        if(productsInOrder.size()>0){
-            noProductInOrderTextView.setVisibility(View.INVISIBLE);
-            //Clear list table layout
-            clearListTableLayout();
-            //Set moneyChangeBtn able to click
-            moneyChangeBtn.setEnabled(true);
-
-        }else{
-            noProductInOrderTextView.setVisibility(View.VISIBLE);
-            listItemTableLayout.removeAllViews();
-            //Set moneyChangeBtn Unable to click
-            moneyChangeBtn.setEnabled(false);
-        }
-
-
-        //loop list table layout
-        int index = 0;
-        for(final ProductModel.Product product : productsInOrder){
-            TableRow tableRowData = new TableRow(getActivity());
-            TextView productName = new TextView(getActivity());
-
-            productName.setPadding(14,14,14,14);
-            productName.setBackgroundColor(Color.parseColor("#FFFFFF"));
-
-            productName.setText(subProductName(product.getProductName()));
-
-            //Show product details
-            productName.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                }
-            });
-
-            productName.setGravity(Gravity.CENTER);
-            TextView productQuantity = new TextView(getActivity());
-            productQuantity.setPadding(14,14,14,14);
-            productQuantity.setBackgroundColor(Color.parseColor("#FFFFFF"));
-            productQuantity.setText(String.valueOf(product.getProductQty()));
-            productQuantity.setGravity(Gravity.CENTER);
-
-            TextView productPrice = new TextView(getActivity());
-            productPrice.setText(String.valueOf(product.getProductSalePrice()*product.getProductQty()));
-            productPrice.setPadding(14,14,14,14);
-            productPrice.setBackgroundColor(Color.parseColor("#FFFFFF"));
-
-            productPrice.setGravity(Gravity.CENTER);
-            ImageView trash = new ImageView(getActivity());
-            trash.setImageResource(R.drawable.ic_delete_black_24dp);
-            trash.setPadding(6,6,6,6);
-            trash.setBackgroundColor(Color.parseColor("#FFFFFF"));
-
-            final int finalIndex = index;
-            trash.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    new RemoveOrderController().removeOrder(product);
-                }
-            });
-
-
-            tableRowData.addView(productName);
-            tableRowData.addView(productQuantity);
-            tableRowData.addView(productPrice);
-            tableRowData.addView(trash);
-
-            listItemTableLayout.addView(tableRowData);
-
-            index++;
-        }
-        //Calculate and setTotal text
-        calculateTotal();
-    }
 
     public void calculateTotal(){
         //Set total price text
@@ -650,10 +535,128 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 productsInOrder.add(product);
             }
 
-            updateListTableLayout();
+            new ListOrder().updateListTableLayout();
         }
     }
 
+    public class ListOrder{
+
+        public void clearListTableLayout(){
+            listItemTableLayout.removeAllViews();
+            TextView headerName = new TextView(getContext());
+            TextView headerQty = new TextView(getContext());
+            TextView headerPrice = new TextView(getContext());
+            TextView headerDelete = new TextView(getContext());
+
+            headerName.setPadding(10,10,10,10);
+            headerName.setBackgroundColor(Color.parseColor("#009688"));
+            headerName.setText("ชื่อสินค้า");
+            headerName.setTextColor(Color.WHITE);
+            headerName.setGravity(Gravity.CENTER);
+
+            headerQty.setPadding(10,10,10,10);
+            headerQty.setBackgroundColor(Color.parseColor("#009688"));
+            headerQty.setText("จำนวนสินค้า");
+            headerQty.setTextColor(Color.WHITE);
+            headerQty.setGravity(Gravity.CENTER);
+
+            headerPrice.setPadding(10,10,10,10);
+            headerPrice.setBackgroundColor(Color.parseColor("#009688"));
+            headerPrice.setText("ราคา");
+            headerPrice.setTextColor(Color.WHITE);
+            headerPrice.setGravity(Gravity.CENTER);
+
+            headerDelete.setPadding(10,10,10,10);
+            headerDelete.setBackgroundColor(Color.parseColor("#009688"));
+            headerDelete.setText("ลบ");
+            headerDelete.setTextColor(Color.WHITE);
+            headerDelete.setGravity(Gravity.CENTER);
+
+            TableRow tableRow = new TableRow(getContext());
+            tableRow.addView(headerName);
+            tableRow.addView(headerQty);
+            tableRow.addView(headerPrice);
+            tableRow.addView(headerDelete);
+
+            listItemTableLayout.addView(tableRow);
+        }
+
+        public void updateListTableLayout(){
+            //Check product in order to show no product in order text
+            if(productsInOrder.size()>0){
+                noProductInOrderTextView.setVisibility(View.INVISIBLE);
+                //Clear list table layout
+                clearListTableLayout();
+                //Set moneyChangeBtn able to click
+                moneyChangeBtn.setEnabled(true);
+
+            }else{
+                noProductInOrderTextView.setVisibility(View.VISIBLE);
+                listItemTableLayout.removeAllViews();
+                //Set moneyChangeBtn Unable to click
+                moneyChangeBtn.setEnabled(false);
+            }
+
+
+            //loop list table layout
+            int index = 0;
+            for(final ProductModel.Product product : productsInOrder){
+                TableRow tableRowData = new TableRow(getActivity());
+                TextView productName = new TextView(getActivity());
+
+                productName.setPadding(14,14,14,14);
+                productName.setBackgroundColor(Color.parseColor("#FFFFFF"));
+
+                productName.setText(subProductName(product.getProductName()));
+
+                //Show product details
+                productName.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                });
+
+                productName.setGravity(Gravity.CENTER);
+                TextView productQuantity = new TextView(getActivity());
+                productQuantity.setPadding(14,14,14,14);
+                productQuantity.setBackgroundColor(Color.parseColor("#FFFFFF"));
+                productQuantity.setText(String.valueOf(product.getProductQty()));
+                productQuantity.setGravity(Gravity.CENTER);
+
+                TextView productPrice = new TextView(getActivity());
+                productPrice.setText(String.valueOf(product.getProductSalePrice()*product.getProductQty()));
+                productPrice.setPadding(14,14,14,14);
+                productPrice.setBackgroundColor(Color.parseColor("#FFFFFF"));
+
+                productPrice.setGravity(Gravity.CENTER);
+                ImageView trash = new ImageView(getActivity());
+                trash.setImageResource(R.drawable.ic_delete_black_24dp);
+                trash.setPadding(6,6,6,6);
+                trash.setBackgroundColor(Color.parseColor("#FFFFFF"));
+
+                final int finalIndex = index;
+                trash.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        new RemoveOrderController().removeOrder(product);
+                    }
+                });
+
+
+                tableRowData.addView(productName);
+                tableRowData.addView(productQuantity);
+                tableRowData.addView(productPrice);
+                tableRowData.addView(trash);
+
+                listItemTableLayout.addView(tableRowData);
+
+                index++;
+            }
+            //Calculate and setTotal text
+            calculateTotal();
+        }
+    }
 
     //RemoveOrderController
     public class RemoveOrderController{
@@ -682,7 +685,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                             }
                             productsInOrder.remove(index);
                             totalPrice = 0;
-                            updateListTableLayout();
+                            new ListOrder().updateListTableLayout();
                             break;
                         case DialogInterface.BUTTON_NEGATIVE:
                             break;
@@ -799,7 +802,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             printerHelper.printText("วันที่ทำรายการ"+ " " + printerHelper.getDate(), 23, "center");
             printResceiptBtn.setEnabled(false);
             productsInOrder.clear();
-            updateListTableLayout();
+            new ListOrder().updateListTableLayout();
         }
     }
 
