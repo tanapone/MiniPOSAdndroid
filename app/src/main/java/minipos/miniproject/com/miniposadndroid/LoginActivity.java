@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -42,16 +43,24 @@ public class LoginActivity extends AppCompatActivity {
     private Matcher matcher;
     private String Port_PATTERN = "^[1-9]{1}[0-9]{3}$";
     private long backPressedTime;
+    private ProgressDialog progressDialog;
+    private Handler handler;
+    private TextView forgetPasswordTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setTitle("MiniPOS");
         setContentView(R.layout.activity_login);
+        progressDialog = new ProgressDialog(LoginActivity.this);
+        handler = new Handler();
+
         pattern = Pattern.compile(Port_PATTERN);
         usernameEditText = findViewById(R.id.usernameEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
         WSConfigImageBtn = findViewById(R.id.WSConfigImageBtn);
+        forgetPasswordTextView = findViewById(R.id.forgetPasswordTextView);
+
         loginBtn = findViewById(R.id.loginBtn);
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,9 +73,9 @@ public class LoginActivity extends AppCompatActivity {
                     user.getUser().setPassword(passwordEditText.getText().toString());
                     try{
                         final LoginController loginController = new LoginController(getApplicationContext());
-                        final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this);
                         progressDialog.setMessage("กำลังโหลด...");
                         progressDialog.show();
+
                         final Handler handler = new Handler();
                         handler.postDelayed(new Runnable() {
                             @Override
@@ -83,6 +92,8 @@ public class LoginActivity extends AppCompatActivity {
                                         if(messageModel.getMessage().getMessageText()!=null){
                                             if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Wrong username or password.")){
                                                 toast("ชื่อผู้ใช้หรือรหัสผ่านผิด");
+                                            }else if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Your account was closed.")){
+                                                toast("บัญชีผู้ใช้ของคุณถูกปิด ไม่สามารถใช้งานได้ในขณะนี้");
                                             }
                                         }else{
                                             Intent intent = new Intent(LoginActivity.this,MainActivity.class);
@@ -116,6 +127,12 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        forgetPasswordTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new PasswordRecoverController().showPasswordRecoverDialog();
+            }
+        });
     }
 
     public boolean validatePort(final String serverPort){
@@ -199,6 +216,7 @@ public class LoginActivity extends AppCompatActivity {
        }
     }
 
+    //Login Controller
     public class LoginController{
         private Context context;
 
@@ -211,6 +229,57 @@ public class LoginActivity extends AppCompatActivity {
             responseData = new WSTask(context).execute("/login/mobile","POST",jsonUserObject).get();
             return responseData;
         }
+    }
+
+    //ResetPasswordController
+    public class PasswordRecoverController{
+
+        public void showPasswordRecoverDialog(){
+            AlertDialog.Builder mBuilder = new AlertDialog.Builder(LoginActivity.this);
+            View mView = getLayoutInflater().inflate(R.layout.forgot_password_dialog, null);
+            final EditText emailEditText = (EditText) mView.findViewById(R.id.emailEditText);
+            final Button forgetPasswordBtn = (Button) mView.findViewById(R.id.forgetPasswordBtn);
+            forgetPasswordBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(emailEditText.getText().toString().equals("")){
+                        emailEditText.setError("กรุณากรอกอีเมล");
+                    }else{
+                        sendMailPasswordReset(emailEditText.getText().toString());
+                    }
+                }
+            });
+            mBuilder.setView(mView);
+            mBuilder.show();
+        }
+
+        public void sendMailPasswordReset(final String email){
+            progressDialog.setMessage("กำลังโหลด...");
+            progressDialog.show();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        String responseData = new WSTask(getApplicationContext()).execute("/user/sentResetPassword?email="+email,"GET").get();
+                        MessageModel messageModel;
+                        if(responseData != null){
+                            messageModel = new MessageModel(responseData);
+                            if (messageModel.getMessage().getMessageText().equalsIgnoreCase("Success.")) {
+                                toast("ส่งอีเมลสำเร็จ");
+                            }else if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Wrong email.")){
+                                toast("อีเมลไม่ถูกต้อง");
+                            }
+                        }
+                        progressDialog.dismiss();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                }
+            },1000);
+        }
+
     }
 
     @Override

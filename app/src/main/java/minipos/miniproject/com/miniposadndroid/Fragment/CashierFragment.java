@@ -301,14 +301,18 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                             String responseData = new WSTask(getContext()).execute("/product/mobile/searchBarcode?authKey="+user.getAuthKey()
                                     +"&barcodeID="+barcodeResult,"GET").get();
                             ProductModel product = new ProductModel(responseData);
-                            //Set searchProduct by barcode
-                            for(int i=0;i<allProducts.size();i++){
+                            if(product.getProduct()==null){
+                                toast("ไม่พบข้อมูลสินค้า");
+                            }else{
+                                //Set searchProduct by barcode
+                                for(int i=0;i<allProducts.size();i++){
                                     if(product.getProduct().getId() == allProducts.get(i).getId()){
                                         product.getProduct().setProductQty(allProducts.get(i).getProductQty());
                                     }
+                                }
+                                showSetQuantityDialog(product.getProduct());
                             }
                             progressDialog.dismiss();
-                            showSetQuantityDialog(product.getProduct());
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         } catch (ExecutionException e) {

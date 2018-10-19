@@ -53,6 +53,8 @@ public class UserModel extends Application {
         @Expose
         private String address;
         @Expose
+        private boolean userStatus;
+        @Expose
         private String authKey;
 
         public long getId() {
@@ -129,6 +131,14 @@ public class UserModel extends Application {
 
         public String getAuthKey() {
             return authKey;
+        }
+
+        public boolean isUserStatus() {
+            return userStatus;
+        }
+
+        public void setUserStatus(boolean userStatus) {
+            this.userStatus = userStatus;
         }
 
         public void setAuthKey(String authKey) {
