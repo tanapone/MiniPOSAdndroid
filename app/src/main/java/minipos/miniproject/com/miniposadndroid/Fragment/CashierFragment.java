@@ -430,41 +430,44 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         }
 
         //Show select product dialog
-        public void showSelectProductDialog(final List<ProductModel.Product> productArrayList){
-            //Define product name array list to show in dialog
-            ArrayList<String> productNameArrayList = new ArrayList<String>();
+        public void showSelectProductDialog(final List<ProductModel.Product> productArrayList) {
+            if (productArrayList.size() < 1) {
+                toast("ไม่พบข้อมูลสินค้า");
+            } else {
+                //Define product name array list to show in dialog
+                ArrayList<String> productNameArrayList = new ArrayList<String>();
 
-            productNameArrayList.clear();
-            //loop set line string to show in dialog get list from agument
-            for(ProductModel.Product product : productArrayList){
-                productNameArrayList.add(product.getProductName()+
-                        "\n"+"จำนวนสินค้า"+
-                        " "+product.getProductQty());
-            }
-            //defind dialog show list searched product
-            LayoutInflater inflater;
-            View dialogView;
-            ListView productListView;
-            inflater = LayoutInflater.from(getActivity());
-            dialogView = inflater.inflate(R.layout.product_select_dialog, null);
-            productListView = (ListView) dialogView.findViewById(R.id.productListView);
-            ArrayAdapter<String> productListViewAdapter = new ArrayAdapter<String>(getActivity(),android.R.layout.simple_expandable_list_item_1,productNameArrayList);
-            final AlertDialog selectProductdialog = new AlertDialog.Builder(getActivity())
-                    .setTitle("กรุณาเลือกสินค้า")
-                    .setView(dialogView).create();
-            //set list to list view
-            productListView.setAdapter(productListViewAdapter);
-            //set list on item click
-            productListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    showSetQuantityDialog(productArrayList.get(position));
-                    selectProductdialog.dismiss();
+                productNameArrayList.clear();
+                //loop set line string to show in dialog get list from agument
+                for (ProductModel.Product product : productArrayList) {
+                    productNameArrayList.add(product.getProductName() +
+                            "\n" + "จำนวนสินค้า" +
+                            " " + product.getProductQty());
                 }
-            });
-            selectProductdialog.show();
+                //defind dialog show list searched product
+                LayoutInflater inflater;
+                View dialogView;
+                ListView productListView;
+                inflater = LayoutInflater.from(getActivity());
+                dialogView = inflater.inflate(R.layout.product_select_dialog, null);
+                productListView = (ListView) dialogView.findViewById(R.id.productListView);
+                ArrayAdapter<String> productListViewAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_expandable_list_item_1, productNameArrayList);
+                final AlertDialog selectProductdialog = new AlertDialog.Builder(getActivity())
+                        .setTitle("กรุณาเลือกสินค้า")
+                        .setView(dialogView).create();
+                //set list to list view
+                productListView.setAdapter(productListViewAdapter);
+                //set list on item click
+                productListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        showSetQuantityDialog(productArrayList.get(position));
+                        selectProductdialog.dismiss();
+                    }
+                });
+                selectProductdialog.show();
+            }
         }
-
         public void showSetQuantityDialog(final ProductModel.Product product){
             //Set SetQuantityDialog
             LayoutInflater inflater;
@@ -539,11 +542,12 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 productsInOrder.add(product);
             }
 
-            new ListOrder().updateListTableLayout();
+            new ListOrderController().updateListTableLayout();
         }
     }
 
-    public class ListOrder{
+    //ListOrderController
+    public class ListOrderController{
 
         public void clearListTableLayout(){
             listItemTableLayout.removeAllViews();
@@ -606,7 +610,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             int index = 0;
             for(final ProductModel.Product product : productsInOrder){
                 TableRow tableRowData = new TableRow(getActivity());
-                TextView productName = new TextView(getActivity());
+                final TextView productName = new TextView(getActivity());
 
                 productName.setPadding(14,14,14,14);
                 productName.setBackgroundColor(Color.parseColor("#FFFFFF"));
@@ -617,7 +621,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 productName.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
+                        toast(product.getProductName());
                     }
                 });
 
@@ -689,7 +693,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                             }
                             productsInOrder.remove(index);
                             totalPrice = 0;
-                            new ListOrder().updateListTableLayout();
+                            new ListOrderController().updateListTableLayout();
                             break;
                         case DialogInterface.BUTTON_NEGATIVE:
                             break;
@@ -806,7 +810,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             printerHelper.printText("วันที่ทำรายการ"+ " " + printerHelper.getDate(), 23, "center");
             printResceiptBtn.setEnabled(false);
             productsInOrder.clear();
-            new ListOrder().updateListTableLayout();
+            new ListOrderController().updateListTableLayout();
         }
     }
 
