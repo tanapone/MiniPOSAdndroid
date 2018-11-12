@@ -179,7 +179,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                     new SearchProductController().searchByCriteria("Category");
                 break;
             case R.id.saveOrderBtn:
-                new ConfirmOrderController().confirmOrder(productsInOrder);
+                showConfirmOrderDialog(productsInOrder);
                 break;
             case R.id.printResceiptBtn:
                 new PrintReceiptController().settingUpOrder();
@@ -245,8 +245,29 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
         return result;
     }
 
-
-
+    //Confirm order dialog
+    public void showConfirmOrderDialog(final List<ProductModel.Product> productList){
+        if (productList.size() < 1) {
+            toast("กรุณาเลือกสินค้าก่อนทำการบันทึกการขาย");
+        } else {
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    switch (which) {
+                        case DialogInterface.BUTTON_POSITIVE:
+                            new ConfirmOrderController().confirmOrder(productList);
+                            break;
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            break;
+                    }
+                }
+            };
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("คุณต้องการบันทึกออเดอร์ ?")
+                    .setPositiveButton("ตกลง", dialogClickListener)
+                    .setNegativeButton("ยกเลิก", dialogClickListener).show();
+        }
+    }
 
     //Controllers
     //SearchProductController
@@ -384,8 +405,11 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             final AlertDialog selectCategorydialog = new AlertDialog.Builder(getActivity())
                     .setTitle("กรุณาเลือกประเภทสินค้า")
                     .setView(dialogView).create();
-            selectCategorydialog.show();
-
+            if(categories.size()<1){
+                toast("ไม่พบข้อมูลประเภทสินค้า");
+            }else {
+                selectCategorydialog.show();
+            }
             searchProductsByCategoryBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -548,6 +572,12 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
 
     //ListOrderController
     public class ListOrderController{
+
+
+        public void listOrder(){
+            this.clearListTableLayout();
+            this.updateListTableLayout();
+        }
 
         public void clearListTableLayout(){
             listItemTableLayout.removeAllViews();
@@ -712,9 +742,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
     public class ConfirmOrderController{
 
         public void confirmOrder(List<ProductModel.Product> productList) {
-            if (productList.size() < 1) {
-                toast("กรุณาเลือกสินค้าก่อนทำการบันทึกการขาย");
-            } else {
+                saveOrderBtn.setEnabled(false);
                 OrderModel orderModel = new OrderModel();
                 List<OrderDetailModel> orderDetailModels = new ArrayList<OrderDetailModel>();
                 for (ProductModel.Product product : productList) {
@@ -747,8 +775,6 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                     e.printStackTrace();
                 }
             }
-        }
-
     }
 
     //PrintReceiptController
@@ -810,6 +836,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
             printerHelper.printText("วันที่ทำรายการ"+ " " + printerHelper.getDate(), 23, "center");
             printResceiptBtn.setEnabled(false);
             productsInOrder.clear();
+            saveOrderBtn.setEnabled(true);
             new ListOrderController().updateListTableLayout();
         }
     }

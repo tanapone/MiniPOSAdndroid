@@ -29,6 +29,8 @@ import minipos.miniproject.com.miniposadndroid.Models.UserModel;
 import minipos.miniproject.com.miniposadndroid.R;
 import minipos.miniproject.com.miniposadndroid.WSTask.WSTask;
 
+import static xdroid.toaster.Toaster.toast;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -86,6 +88,9 @@ public class ViewProductsFragment extends Fragment implements View.OnClickListen
                         e.printStackTrace();
                     }
                     progressDialog.dismiss();
+                    if(allProducts.size()<1){
+                        toast("ไม่พบข้อมูลสินค้า.");
+                    }
                 }
             },1000);
         }

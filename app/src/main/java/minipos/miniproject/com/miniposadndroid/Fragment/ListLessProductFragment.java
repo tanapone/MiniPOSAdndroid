@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -27,6 +28,8 @@ import minipos.miniproject.com.miniposadndroid.Models.ProductModel;
 import minipos.miniproject.com.miniposadndroid.Models.UserModel;
 import minipos.miniproject.com.miniposadndroid.R;
 import minipos.miniproject.com.miniposadndroid.WSTask.WSTask;
+
+import static xdroid.toaster.Toaster.toast;
 
 public class ListLessProductFragment extends Fragment implements View.OnClickListener{
 
@@ -78,6 +81,9 @@ public class ListLessProductFragment extends Fragment implements View.OnClickLis
 
 
                             progressDialog.dismiss();
+                            if(allLessProducts.size()<1){
+                                toast("ไม่พบข้อมูลสินค้า.");
+                            }
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         } catch (ExecutionException e) {

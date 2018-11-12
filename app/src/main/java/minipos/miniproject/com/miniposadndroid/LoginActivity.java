@@ -91,7 +91,7 @@ public class LoginActivity extends AppCompatActivity {
                                     if(responseData!=null){
                                         if(messageModel.getMessage().getMessageText()!=null){
                                             if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Wrong username or password.")){
-                                                toast("ชื่อผู้ใช้หรือรหัสผ่านผิด");
+                                                toast("ไม่พบข้อมูลผู้ใช้ กรุณาตรวจสอบอีกครั้ง");
                                             }else if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Your account was closed.")){
                                                 toast("บัญชีผู้ใช้ของคุณถูกปิด ไม่สามารถใช้งานได้ในขณะนี้");
                                             }
@@ -120,6 +120,8 @@ public class LoginActivity extends AppCompatActivity {
 
         });
 
+
+
         WSConfigImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -130,9 +132,34 @@ public class LoginActivity extends AppCompatActivity {
         forgetPasswordTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new PasswordRecoverController().showPasswordRecoverDialog();
+                showPasswordRecoverDialog();
             }
         });
+
+
+
+    }
+
+    //showPasswordRecoverDialog
+    public void showPasswordRecoverDialog(){
+        AlertDialog.Builder mBuilder = new AlertDialog.Builder(LoginActivity.this);
+        View mView = getLayoutInflater().inflate(R.layout.forgot_password_dialog, null);
+        final EditText emailEditText = (EditText) mView.findViewById(R.id.emailEditText);
+        final Button forgetPasswordBtn = (Button) mView.findViewById(R.id.forgetPasswordBtn);
+        forgetPasswordBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(emailEditText.getText().toString().equals("")){
+                    emailEditText.setError("กรุณากรอกอีเมล");
+                }else{
+                    UserModel user = new UserModel();
+                    user.getUser().setEmail(emailEditText.getText().toString());
+                    new PasswordRecoverController().sendMailPasswordReset(user);
+                }
+            }
+        });
+        mBuilder.setView(mView);
+        mBuilder.show();
     }
 
     public boolean validatePort(final String serverPort){
@@ -234,40 +261,21 @@ public class LoginActivity extends AppCompatActivity {
     //ResetPasswordController
     public class PasswordRecoverController{
 
-        public void showPasswordRecoverDialog(){
-            AlertDialog.Builder mBuilder = new AlertDialog.Builder(LoginActivity.this);
-            View mView = getLayoutInflater().inflate(R.layout.forgot_password_dialog, null);
-            final EditText emailEditText = (EditText) mView.findViewById(R.id.emailEditText);
-            final Button forgetPasswordBtn = (Button) mView.findViewById(R.id.forgetPasswordBtn);
-            forgetPasswordBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(emailEditText.getText().toString().equals("")){
-                        emailEditText.setError("กรุณากรอกอีเมล");
-                    }else{
-                        sendMailPasswordReset(emailEditText.getText().toString());
-                    }
-                }
-            });
-            mBuilder.setView(mView);
-            mBuilder.show();
-        }
-
-        public void sendMailPasswordReset(final String email){
+        public void sendMailPasswordReset(final UserModel user){
             progressDialog.setMessage("กำลังโหลด...");
             progressDialog.show();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        String responseData = new WSTask(getApplicationContext()).execute("/user/sentResetPassword?email="+email,"GET").get();
+                        String responseData = new WSTask(getApplicationContext()).execute("/user/sentResetPassword","POST",new Gson().toJson(user.getUser())).get();
                         MessageModel messageModel;
                         if(responseData != null){
                             messageModel = new MessageModel(responseData);
                             if (messageModel.getMessage().getMessageText().equalsIgnoreCase("Success.")) {
                                 toast("ส่งอีเมลสำเร็จ");
                             }else if(messageModel.getMessage().getMessageText().equalsIgnoreCase("Wrong email.")){
-                                toast("อีเมลไม่ถูกต้อง");
+                                toast("ไม่พบข้อมูลผู้ใช้ กรุณาตรวจสอบอีกครั้ง");
                             }
                         }
                         progressDialog.dismiss();

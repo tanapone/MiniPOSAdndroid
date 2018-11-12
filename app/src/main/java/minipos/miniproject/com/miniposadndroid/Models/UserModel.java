@@ -35,8 +35,6 @@ public class UserModel extends Application {
 
     public class User{
         @Expose
-        private long id = 0;
-        @Expose
         private String username;
         @Expose
         private String password;
@@ -56,14 +54,6 @@ public class UserModel extends Application {
         private boolean userStatus;
         @Expose
         private String authKey;
-
-        public long getId() {
-            return id;
-        }
-
-        public void setId(long id) {
-            this.id = id;
-        }
 
         public String getUsername() {
             return username;
