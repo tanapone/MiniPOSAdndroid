@@ -651,7 +651,7 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                 productName.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        toast(product.getProductName());
+                        new ViewProductDetailsController().showViewProductDetailsDialog(product);
                     }
                 });
 
@@ -735,6 +735,25 @@ public class CashierFragment extends Fragment  implements View.OnClickListener {
                     .setMessage(product.getProductName())
                     .setPositiveButton("ตกลง", dialogClickListener)
                     .setNegativeButton("ยกเลิก", dialogClickListener).show();
+        }
+    }
+
+    public class ViewProductDetailsController{
+        public void showViewProductDetailsDialog(ProductModel.Product product){
+            LayoutInflater inflater;
+            final View dialogView;
+            inflater = LayoutInflater.from(getActivity());
+
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("ข้อมูลสินค้า")
+                    .setMessage("ชื่อสินค้า : "+product.getProductName().toString()
+                            +"\n"+"รหัสบาร์โค้ด : "+product.getProductBarcodeID().toString()
+                            +"\n"+"ราคาสินค้า : "+product.getProductSalePrice() + " บาท"
+                            +"\n"+"บริษัทนำเข้า : "+product.getCompany().getCompanyName()
+                            +"\n"+"ประเภทสินค้า : "+ product.getCategory().getCategoryName().toString()
+                    )
+                    .setPositiveButton("ตกลง", null)
+                    .show();
         }
     }
 
